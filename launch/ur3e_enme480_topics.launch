@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+
+<launch>
+
+	<node name="ur3e_mrc_enme480_topics" pkg="ur3e_mrc" type="ur3e_mrc_enme480_topics" output="screen">
+	</node>
+</launch>
+

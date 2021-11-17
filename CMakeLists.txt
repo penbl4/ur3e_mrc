@@ -161,8 +161,11 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS}s)
 #     src/ur3e_mrc_enme480.cpp)
 # add_executable(${PROJECT_NAME}
 #       src/ur3e_mrc_enme480.cpp)
-add_executable(ur3e_mrc_enme480 src/ur3e_mrc_enme480.cpp)
-add_dependencies(ur3e_mrc_enme480 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_executable(ur3e_mrc_enme480_topics src/ur3e_mrc_enme480_topics.cpp)
+add_dependencies(ur3e_mrc_enme480_topics ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+add_executable(ur3e_mrc_enme480_ctrl src/ur3e_mrc_enme480_ctrl.cpp)
+add_dependencies(ur3e_mrc_enme480_ctrl ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 
 
@@ -177,7 +180,8 @@ add_dependencies(ur3e_mrc_enme480 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_E
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(ur3e_mrc_enme480 ${catkin_LIBRARIES})
+target_link_libraries(ur3e_mrc_enme480_topics ${catkin_LIBRARIES})
+target_link_libraries(ur3e_mrc_enme480_ctrl ${catkin_LIBRARIES})
 # target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 
@@ -219,7 +223,12 @@ target_link_libraries(ur3e_mrc_enme480 ${catkin_LIBRARIES})
 install(DIRECTORY launch/ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch)
 
 ## Mark executables and/or libraries for installation
-install(TARGETS ur3e_mrc_enme480
+install(TARGETS ur3e_mrc_enme480_topics
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(TARGETS ur3e_mrc_enme480_ctrl
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

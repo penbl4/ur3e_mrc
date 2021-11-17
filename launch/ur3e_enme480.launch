@@ -2,7 +2,7 @@
 
 <launch>
 
-	<node name="ur3e_mrc_enme480_1" pkg="ur3e_mrc" type="ur3e_mrc_enme480" output="screen">
-	</node>
+	<node name="ur3e_mrc_enme480_topics" pkg="ur3e_mrc" type="ur3e_mrc_enme480_topics" output="screen"> </node>
+	<node name="ur3e_mrc_enme480_ctrl" pkg="ur3e_mrc" type="ur3e_mrc_enme480_ctrl" output="screen"> </node>
 </launch>
 

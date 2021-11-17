@@ -1,4 +1,4 @@
-#include <ur3e_mrc/ur3e_mrc_enme480.h>
+#include <ur3e_mrc/ur3e_mrc_enme480_ctrl.h>
 
 #define N_JOINTS 6
 #define CTRL_TO_RUN "scaled_pos_joint_traj_controller"
@@ -17,17 +17,7 @@ UR3eArm::UR3eArm()
   else
     ROS_ERROR("Failed to connect to the action server");
 
-  pos_pub = nh_.advertise<ur3e_mrc::position>("ur3/position", 10);
-  grip_grasp_pub = nh_.advertise<std_msgs::Bool>("gripper/grasping", 10);
-  grip_inp_pub = nh_.advertise<ur3e_mrc::gripper_input>("ur3/gripper_input", 10);
-
-  sub_js_ = nh_.subscribe("joint_states", 10, &UR3eArm::jsCallback, this);
-  ROS_INFO("Subscribed to joint states");
-
   sub_comm_ = nh_.subscribe("ur3/command", 10, &UR3eArm::commCallback, this);
-  ROS_INFO("Subscribed to ur3 command");
-
-  sub_io_ = nh_.subscribe("/ur_hardware_interface/io_states", 10, &UR3eArm::ioCallback, this);
   ROS_INFO("Subscribed to ur3 command");
 
   // Controller manager service to switch controllers
@@ -48,8 +38,6 @@ UR3eArm::UR3eArm()
   ROS_INFO("Turning ON the vacuum generator");
   ioCtrl(12, 1);
   ioCtrl(1, 0); // making sure the gripper is OFF
-
-
 }
 
 UR3eArm::~UR3eArm()
@@ -85,12 +73,12 @@ void UR3eArm::ctrlRunCheck()
   }
 }
 
-void UR3eArm::ioCtrl(unsigned short int numPin, unsigned short int valPin) 
+void UR3eArm::ioCtrl(unsigned short int numPin, unsigned short int valPin)
 {
   ur_msgs::SetIO io_service;
-  io_service.request.fun = 1; // 1 is digital output
-  io_service.request.pin = numPin; // Pin number
-  io_service.request.state = valPin;   // State, as far as I know it can be also voltage
+  io_service.request.fun = 1;        // 1 is digital output
+  io_service.request.pin = numPin;   // Pin number
+  io_service.request.state = valPin; // State, as far as I know it can be also voltage
 
   if (io_client_srv_.call(io_service))
   {
@@ -99,7 +87,7 @@ void UR3eArm::ioCtrl(unsigned short int numPin, unsigned short int valPin)
   else
   {
     ROS_ERROR("IO request failed.");
-  }  
+  }
 }
 
 void UR3eArm::sendTrajectory(control_msgs::FollowJointTrajectoryGoal goal)
@@ -140,15 +128,6 @@ actionlib::SimpleClientGoalState UR3eArm::getState()
   return trajectory_client_->getState();
 }
 
-void UR3eArm::jsCallback(const sensor_msgs::JointState &msg)
-{
-  ur3e_mrc::position pos_msg;
-  pos_msg.position = {msg.position[2] + boost::math::constants::pi<double>()/2, msg.position[1], msg.position[0], msg.position[3], msg.position[4], msg.position[5]};
-
-  pos_msg.isReady = ur3e_isReady;
-  pos_pub.publish(pos_msg);
-}
-
 void UR3eArm::commCallback(const ur3e_mrc::command &msg)
 {
   // ROS_INFO("Got ur3e command");
@@ -179,8 +158,7 @@ void UR3eArm::commCallback(const ur3e_mrc::command &msg)
   {
     ioCtrl(1, 0); // turning the gripper OFF
     grip_isON = false;
-  }  
-
+  }
 
   initGoal(goal);
 
@@ -207,11 +185,9 @@ void UR3eArm::commCallback(const ur3e_mrc::command &msg)
   // fill the positions of the goal
   goal.trajectory.points[0].positions.resize(N_JOINTS);
   goal.trajectory.points[0].positions = msg.destination;
-  goal.trajectory.points[0].positions[0] -= boost::math::constants::pi<double>()/2;
+  goal.trajectory.points[0].positions[0] -= boost::math::constants::pi<double>() / 2;
   goal.trajectory.points[0].time_from_start = ros::Duration(2.0);
   // pt.time_from_start = get_duration(data.destination, data.v)
-
-
 
   sendTrajectory(goal);
   while (!getState().isDone() && ros::ok())
@@ -237,39 +213,18 @@ void UR3eArm::commCallback(const ur3e_mrc::command &msg)
   // cmd_pub.publish(jt)
 }
 
-void UR3eArm::ioCallback(const ur_msgs::IOStates &msg)
-{
-  std_msgs::Bool grip_grasp_msg;
-  ur3e_mrc::gripper_input grip_inp_msg;
-
-  grip_grasp_msg.data = msg.digital_in_states[0].state;
-  
-  if (msg.digital_in_states[0].state)
-    grip_inp_msg.DIGIN = 1;
-  else
-    grip_inp_msg.DIGIN = 0;
-
-  grip_inp_msg.AIN0 = msg.analog_in_states[0].state;
-  grip_inp_msg.AIN1 = 0.0;
-
-
-  grip_grasp_pub.publish(grip_grasp_msg);
-  grip_inp_pub.publish(grip_inp_msg);
-
-}
-
 void mySigintHandler(int sig)
 {
   // Do some custom action.
   // For example, publish a stop message to some other nodes.
-  
+
   // All the default sigint handler does is call shutdown()
   g_request_shutdown = 1;
   // ros::shutdown();
 }
 
 // Replacement "shutdown" XMLRPC callback
-void shutdownCallback(XmlRpc::XmlRpcValue& params, XmlRpc::XmlRpcValue& result)
+void shutdownCallback(XmlRpc::XmlRpcValue &params, XmlRpc::XmlRpcValue &result)
 {
   int num_params = 0;
   if (params.getType() == XmlRpc::XmlRpcValue::TypeArray)
@@ -295,7 +250,7 @@ int main(int argc, char **argv)
 
   // Override XMLRPC shutdown
   ros::XMLRPCManager::instance()->unbind("shutdown");
-  ros::XMLRPCManager::instance()->bind("shutdown", shutdownCallback);  
+  ros::XMLRPCManager::instance()->bind("shutdown", shutdownCallback);
 
   if (!ur3e_mrc_var.initStatus())
     ros::shutdown();
